@@ -5,7 +5,6 @@ from src.Tools.utils import *
 from src.gRPC import system_pb2, system_pb2_grpc
 
 import sys
-import json
 import time
 import grpc
 from rdkit import Chem
