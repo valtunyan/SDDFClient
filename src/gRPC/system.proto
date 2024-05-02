@@ -1,0 +1,55 @@
+syntax="proto3";
+
+package System;
+
+service SDDFactory {
+  rpc GetTask(GetTaskRequest) returns (GetTaskResponse) {}
+  rpc PutResult(PutResultRequest) returns (PutResultResponse) {}
+}
+
+
+
+enum ResponseStatus {
+  SUCCESS = 0;
+  TRY_LATER = 1;
+  TOOL_FAILED = 2;
+  INTERNAL_ERROR = 3;
+}
+
+
+
+enum TaskType {
+  ENERGY = 0;
+}
+
+message Task {
+  TaskType task_type = 1;     
+  string task_identifier = 2; 
+  string task_content = 3;    
+}
+
+message TaskResult {
+  TaskType task_type = 1;     
+  string task_identifier = 2; 
+  string task_result = 3;     
+}
+
+
+
+message GetTaskRequest {
+  string client_identifier = 1;
+}
+
+message GetTaskResponse {
+  ResponseStatus status = 1;
+  Task task = 2;
+}
+
+message PutResultRequest {
+  ResponseStatus status = 1;
+  TaskResult task_result = 2;
+}
+
+message PutResultResponse {
+  ResponseStatus status = 1;
+}

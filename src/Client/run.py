@@ -2,30 +2,30 @@ from multiprocessing import *
 
 from src.constants import *
 from src.Tools.utils import *
-from src.Client import system_pb2, system_pb2_grpc
+from src.gRPC import system_pb2, system_pb2_grpc
 
 import sys
 import json
 import time
-import rdkit
+import grpc
 from rdkit import Chem
 
-channel = system_pb2_grpc.grpc.insecure_channel(f'{CURRENT_SERVER_IP}:50051')
-stub = system_pb2_grpc.EnergyCalculationStub(channel)
+channel = grpc.insecure_channel(f'{SERVER_IP}:50051')
+stub = system_pb2_grpc.SDDFactoryStub(channel)
 
 def take_task_process_write_loop(args):
     process_id, worker_count = args
 
     print(f"[Process {process_id}] Worker initialized.", flush=True)
     psikit_driver = create_runner(worker_count)
-    metadata = [("authorization", f"Bearer {CLIENT_UUID}")]
+    metadata = [("authorization", f"Bearer {TOKEN}")]
 
     while True:
         sleep_time = FAILURE_SLEEP_TIME
 
         try:
             response = stub.GetTask(
-                system_pb2.GetTaskRequest(client_identifier=CLIENT_UUID), 
+                system_pb2.GetTaskRequest(client_identifier=CLIENT_ID), 
                 metadata=metadata
             )
 
@@ -41,9 +41,21 @@ def take_task_process_write_loop(args):
 
                 raise Exception(f"Server Responded With {status} status, cause - {response.task_content}")
 
-            task_id = response.task_identifier
+            task_id = response.task.task_identifier
             print(f"[Process {process_id}] Received Task with ID:", task_id, flush=True)
 
+            mol_block = response.task.task_content
+            psikit_driver.mol = Chem.MolFromMolBlock(mol_block, removeHs=False)
+            energy = psikit_driver.energy(**DEFAULT_ENERGY_CONF)
+            
+            response = stub.PutResult(
+                system_pb2.PutResultRequest(status=system_pb2.SUCCESS,
+                                            task_result=system_pb2.TaskResult(
+                                                task_type=system_pb2.ENERGY,
+                                                task_identifier=task_id, 
+                                                task_result=str(energy))),
+                metadata=metadata)
+            """
             task_content = json.loads(response.task_content)
             energy_conf = task_content.get("energy_conf", DEFAULT_ENERGY_CONF)
             mol_blocks = task_content["mol_blocks"]
@@ -57,11 +69,13 @@ def take_task_process_write_loop(args):
                     results.append(energy)
                 except Exception as ex:
                     results.append(str(ex))
+            
 
             stub.PutResult(
                 system_pb2.PutResultRequest(task_identifier=task_id, 
                                             results=json.dumps(results)),
                 metadata=metadata)
+            """
             
             sleep_time = SUCCESS_SLEEP_TIME
         except Exception as ex:
