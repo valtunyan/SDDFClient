@@ -7,6 +7,7 @@ from src.gRPC import system_pb2, system_pb2_grpc
 import sys
 import time
 import grpc
+import json
 from rdkit import Chem
 
 channel = grpc.insecure_channel(f'{SERVER_IP}:50051')
@@ -45,36 +46,24 @@ def take_task_process_write_loop(args):
 
             mol_block = response.task.task_content
             psikit_driver.mol = Chem.MolFromMolBlock(mol_block, removeHs=False)
-            energy = psikit_driver.energy(**DEFAULT_ENERGY_CONF)
             
+            results = {}
+            
+            energy = psikit_driver.energy(**DEFAULT_CONF)
+            if (response.task.task_type & system_pb2.ENERGY) > 0:
+                results["energy"] = energy
+
+            if (response.task.task_type & system_pb2.RESP_CHARGES) > 0:
+                resp_charges = psikit_driver.calc_resp_charges()
+                results["resp_charges"] = list(resp_charges)
+
             response = stub.PutResult(
                 system_pb2.PutResultRequest(status=system_pb2.SUCCESS,
                                             task_result=system_pb2.TaskResult(
-                                                task_type=system_pb2.ENERGY,
+                                                task_type=response.task.task_type,
                                                 task_identifier=task_id, 
-                                                task_result=str(energy))),
+                                                task_result=json.dumps(results))),
                 metadata=metadata)
-            """
-            task_content = json.loads(response.task_content)
-            energy_conf = task_content.get("energy_conf", DEFAULT_ENERGY_CONF)
-            mol_blocks = task_content["mol_blocks"]
-            results = []
-
-            for (id, block) in enumerate(mol_blocks):
-                try:
-                    psikit_driver.mol = Chem.MolFromMolBlock(block, removeHs=False)
-                    energy = psikit_driver.energy(**energy_conf)
-                    print(f"[Process {process_id}] Calculated Energy for Conformation #{id}:", energy)
-                    results.append(energy)
-                except Exception as ex:
-                    results.append(str(ex))
-            
-
-            stub.PutResult(
-                system_pb2.PutResultRequest(task_identifier=task_id, 
-                                            results=json.dumps(results)),
-                metadata=metadata)
-            """
             
             sleep_time = SUCCESS_SLEEP_TIME
         except Exception as ex:

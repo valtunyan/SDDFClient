@@ -9,7 +9,7 @@ AVAILABLE_CPU_COUNT = os.cpu_count() // 2
 
 # Divide by two for each task to use at least 3 threads
 DEFAULT_WORKER_COUNT = max(1, AVAILABLE_CPU_COUNT // 3)
-DEFAULT_ENERGY_CONF = {'basis_sets' : 'wB97x/6-31G(d)'}
+DEFAULT_CONF = {'basis_sets' : 'wB97x/6-31G(d)'}
 
 SUCCESS_SLEEP_TIME = 10
 FAILURE_SLEEP_TIME = 60

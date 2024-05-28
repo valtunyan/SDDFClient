@@ -19,7 +19,10 @@ enum ResponseStatus {
 
 
 enum TaskType {
-  ENERGY = 0;
+  NONE = 0;
+  ENERGY = 1;
+  RESP_CHARGES = 2;
+  ENERGY_RESP_CHARGES = 3;
 }
 
 message Task {
