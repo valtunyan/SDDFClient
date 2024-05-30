@@ -16,6 +16,13 @@ stub = system_pb2_grpc.SDDFactoryStub(channel)
 def take_task_process_write_loop(args):
     process_id, worker_count = args
 
+    scratch_dir = REPO_DIR / "scratches" / f"{process_id}"
+
+    os.makedirs(scratch_dir, exist_ok=True)
+    os.environ["PSI_SCRATCH"] = scratch_dir
+
+    os.chdir(scratch_dir)
+
     print(f"[Process {process_id}] Worker initialized.", flush=True)
     psikit_driver = create_runner(worker_count)
     metadata = [("authorization", f"Bearer {TOKEN}")]
@@ -46,7 +53,8 @@ def take_task_process_write_loop(args):
 
             mol_block = response.task.task_content
             psikit_driver.mol = Chem.MolFromMolBlock(mol_block, removeHs=False)
-            
+            id_mapping = get_obj_to_block_mapping(psikit_driver.mol, mol_block)
+
             results = {}
             
             energy = psikit_driver.energy(**DEFAULT_CONF)
@@ -54,7 +62,7 @@ def take_task_process_write_loop(args):
                 results["energy"] = energy
 
             if (response.task.task_type & system_pb2.RESP_CHARGES) > 0:
-                resp_charges = psikit_driver.calc_resp_charges()
+                resp_charges = psikit_driver.calc_resp_charges()[id_mapping]
                 results["resp_charges"] = list(resp_charges)
 
             response = stub.PutResult(

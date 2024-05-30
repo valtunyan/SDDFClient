@@ -3,31 +3,47 @@ channels:
   - conda-forge
   - defaults
 dependencies:
+  - _libgcc_mutex=0.1
+  - _openmp_mutex=4.5
   - annotated-types=0.6.0
   - bzip2=1.0.8
-  - ca-certificates=2024.3.11
+  - ca-certificates=2024.2.2
   - dkh=1.2
   - gau2grid=2.0.7
   - gtest=1.14.0
+  - icu=73.2
+  - ld_impl_linux-64=2.40
   - libblas=3.9.0
   - libcblas=3.9.0
   - libcxx=16.0.6
+  - libcxxabi=16.0.6
   - libecpint=1.0.7
   - libexpat=2.6.2
   - libffi=3.4.4
+  - libgcc-ng=13.2.0
+  - libgfortran-ng=13.2.0
+  - libgfortran5=13.2.0
+  - libhwloc=2.9.3
+  - libiconv=1.17
   - libint=2.9.0
   - liblapack=3.9.0
+  - libnsl=2.0.1
   - libopenblas=0.3.27
   - libpcm=1.2.3
   - libsqlite=3.45.2
+  - libstdcxx-ng=13.2.0
+  - libuuid=2.38.1
   - libxc-c=6.2.2
+  - libxcrypt=4.4.36
+  - libxml2=2.12.6
   - libzlib=1.2.13
   - llvm-openmp=18.1.3
+  - mkl=2023.2.0
   - msgpack-python=1.0.7
-  - ncurses=6.4
+  - ncurses=6.4.20240210
   - networkx=3.3
   - numpy=1.26.4
-  - openssl=3.2.1
+  - openssl=3.3.0
   - optking=0.2.1
   - pcmsolver=1.2.3
   - pint=0.23
@@ -45,9 +61,11 @@ dependencies:
   - qcelemental=0.27.1
   - qcengine=0.29.0
   - readline=8.2
+  - resp=1.0.0
   - scipy=1.13.0
   - setuptools=68.2.2
   - sqlite=3.41.2
+  - tbb=2021.11.0
   - tk=8.6.13
   - typing-extensions=4.11.0
   - typing_extensions=4.11.0
@@ -56,6 +74,7 @@ dependencies:
   - xz=5.4.6
   - yaml=0.2.5
   - zlib=1.2.13
+  - zstd=1.5.5
   - pip:
       - debtcollector==3.0.0
       - grpcio==1.62.1

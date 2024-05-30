@@ -1,6 +1,9 @@
+from pathlib import Path
+
 import psutil
-import uuid
 import os
+
+REPO_DIR = Path(os.path.abspath(__file__)).parent.parent
 
 # Use half of both memory and compute resources
 # ! You can update these constants, based on your preferences
