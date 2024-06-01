@@ -19,7 +19,7 @@ def take_task_process_write_loop(args):
     scratch_dir = REPO_DIR / "scratches" / f"{process_id}"
 
     os.makedirs(scratch_dir, exist_ok=True)
-    os.environ["PSI_SCRATCH"] = scratch_dir
+    os.environ["PSI_SCRATCH"] = scratch_dir.as_posix()
 
     os.chdir(scratch_dir)
 
