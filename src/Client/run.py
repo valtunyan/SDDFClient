@@ -46,7 +46,7 @@ def take_task_process_write_loop(args):
                     sleep_time = 2 * FAILURE_SLEEP_TIME
                     status = "INTERNAL_ERROR"
 
-                raise Exception(f"Server Responded With {status} status, cause - {response.task_content}")
+                raise Exception(f"Server Responded With {status} status, cause - {response.task.task_content}")
 
             task_id = response.task.task_identifier
             print(f"[Process {process_id}] Received Task with ID:", task_id, flush=True)
@@ -56,14 +56,23 @@ def take_task_process_write_loop(args):
             id_mapping = get_obj_to_block_mapping(psikit_driver.mol, mol_block)
 
             results = {}
-            
-            energy = psikit_driver.energy(**DEFAULT_CONF)
-            if (response.task.task_type & system_pb2.ENERGY) > 0:
-                results["energy"] = energy
 
-            if (response.task.task_type & system_pb2.RESP_CHARGES) > 0:
-                resp_charges = psikit_driver.calc_resp_charges()[id_mapping]
-                results["resp_charges"] = list(resp_charges)
+            if response.task.task_type != system_pb2.NONE:
+                try:
+                    energy = psikit_driver.energy(**DEFAULT_CONF)
+                    if (response.task.task_type & system_pb2.ENERGY) > 0:
+                        results["energy"] = energy
+
+                    if (response.task.task_type & system_pb2.RESP_CHARGES) > 0:
+                        try:
+                            resp_charges = psikit_driver.calc_resp_charges()[id_mapping]
+                            print("Calculating charges")
+                            results["resp_charges"] = list(resp_charges)
+                        except Exception as ex:
+                            print(f"[Process {process_id}] Error during RESP charges calculation: {ex}", flush=True)
+                except Exception as ex:
+                    print(f"[Process {process_id}] Error during task consumption: {ex}", flush=True)
+
 
             response = stub.PutResult(
                 system_pb2.PutResultRequest(status=system_pb2.SUCCESS,
