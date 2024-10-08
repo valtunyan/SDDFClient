@@ -1,0 +1,4 @@
+PROJECT_ID = ""
+CLIENT_ID = ""
+TOKEN = ""
+SERVER_IP = ""

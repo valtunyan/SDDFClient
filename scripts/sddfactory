@@ -1,0 +1,13 @@
+#!/bin/bash
+
+config_file_path=$(realpath "$1")
+
+cd /opt/sddfactory
+
+conda activate sddf-client-env
+
+python -c "\
+import json;\
+print(open('src/config_template.py').read().format(**json.load(open('$config_file_path'))));" > src/config.py
+
+python -m src.Client.run

@@ -1,4 +1,4 @@
-name: energy-calc-env
+name: sddf-client-env
 channels:
   - conda-forge
   - defaults
