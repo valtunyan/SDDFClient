@@ -1,0 +1,87 @@
+#!/bin/bash
+
+set -e
+
+# Function to add conda to PATH and source the conda environment setup
+add_conda_to_path() {
+    export PATH="$1/bin:$PATH"
+    source "$1/etc/profile.d/conda.sh"
+}
+
+# Check if conda is installed in common directories
+if command -v conda &> /dev/null; then
+    echo "Conda is already installed and in PATH"
+elif [ -d "/opt/anaconda" ]; then
+    echo "Found conda in /opt/anaconda"
+    add_conda_to_path "/opt/anaconda"
+elif [ -d "/opt/anaconda3" ]; then
+    echo "Found conda in /opt/anaconda3"
+    add_conda_to_path "/opt/anaconda3"
+elif [ -d "/opt/miniconda" ]; then
+    echo "Found conda in /opt/miniconda"
+    add_conda_to_path "/opt/miniconda"
+elif [ -d "/opt/miniconda3" ]; then
+    echo "Found conda in /opt/miniconda3"
+    add_conda_to_path "/opt/miniconda3"
+elif [ -d "$HOME/miniconda3" ]; then
+    echo "Found conda in $HOME/miniconda3"
+    add_conda_to_path "$HOME/miniconda3"
+elif [ -d "$HOME/anaconda3" ]; then
+    echo "Found conda in $HOME/anaconda3"
+    add_conda_to_path "$HOME/anaconda3"
+else
+    echo "Conda not found, downloading and installing Miniconda..."
+
+    # Download Miniconda installer
+    MINICONDA_INSTALLER=Miniconda3-latest-Linux-x86_64.sh
+    curl -LO https://repo.anaconda.com/miniconda/$MINICONDA_INSTALLER
+
+    # Install Miniconda silently to /opt/miniconda
+    bash $MINICONDA_INSTALLER -b -p /opt/miniconda
+
+    # Clean up installer
+    rm -f $MINICONDA_INSTALLER
+
+    # Add conda to PATH for current session
+    add_conda_to_path "/opt/miniconda"
+fi
+
+DIRECTORY="/opt/sddfactory"
+ENV_NAME="sddf-client-env"
+
+# Check if conda is in the path after the installation
+if command -v conda &> /dev/null; then
+    echo "Conda is installed. Setting up environment..."
+    if [ -d "$DIRECTORY" ]; then
+        echo "Directory $DIRECTORY exists. Performing git pull..."
+        cd "$DIRECTORY"
+	git checkout .
+        git pull --force
+    else
+        echo "Directory $DIRECTORY does not exist. Cloning the repository..."
+        git clone https://github.com/valtunyan/SDDFClient.git "$DIRECTORY"
+    fi
+
+    if conda env list | grep -q "$ENV_NAME"; then
+        echo "Conda environment $ENV_NAME exists, updating environment..."
+        conda env update -f $DIRECTORY/environment.yml
+    else
+        echo "Conda environment $ENV_NAME does not exist, creating environment..."
+        conda env create -f $DIRECTORY/environment.yml
+    fi
+
+    conda activate
+else
+    echo "Conda installation failed"
+    exit 1
+fi
+
+# Copy the program files
+sed -i "1a\source $CONDA_PREFIX/etc/profile.d/conda.sh" /opt/sddfactory/scripts/sddfactory
+ln -sf /opt/sddfactory/scripts/sddfactory /usr/local/bin/sddfactory
+
+# Make the program executable
+chmod +x /usr/local/bin/sddfactory
+
+echo "Installation complete"
+
