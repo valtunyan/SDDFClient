@@ -1,13 +1,14 @@
 ## SDDFClient
 
 ### Simple setup
-The easiest way to setup client is to download `dpkg/sddfclient.deb` file into your machine and run the following command.
+The easiest way to setup client is to download `installer/SDDFInstaller` file into your machine navigate to the directory containing downloaded file and run the following commands.
 ```bash
-sudo dpkg -i sddfclient.deb
+chmod +x SDDFInstaller
+./SDDFInstaller
 ```
-After that `sddfactory` script will be available for use under root user. You'll just need to download project specific `config.json` file from website and run the following command.
+After that `sddfactory` script will be available for use. You'll just need to download project specific `config.json` file from website (like in this [page](https://sddfactory.cloud/projects/dft-energy)) and run the following command.
 ```bash
-sudo sddfactory config.json
+sddfactory config.json
 ```
 
 ### Manual setup
@@ -19,3 +20,5 @@ Then you'll need to download project specific `config.json` file from website ch
 ```bash
 scripts/sddfactory_manual config.json
 ```
+
+**NOTE**: If you are planning to run this script on remote machines, make sure that your session doesn't expire. Consider using `nohup` or `tmux`.
