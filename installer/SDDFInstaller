@@ -64,7 +64,7 @@ if command -v conda &> /dev/null; then
         conda env create -f $DIRECTORY/environment.yml
     fi
 
-    conda activate "$ENV_NAME"
+    conda activate
 else
     echo "Conda installation failed"
     exit 1
