@@ -1,8 +1,0 @@
-Package: sddfclient
-Version: 0.1.0
-Section: base
-Priority: optional
-Architecture: all
-Depends: curl, wget, git
-Maintainer: Vahagn Altunyan <altunyanv@gmail.com>
-Description: Client application for SDDFactory project

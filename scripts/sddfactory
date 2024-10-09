@@ -2,7 +2,7 @@
 
 config_file_path=$(realpath "$1")
 
-cd /opt/sddfactory
+cd $HOME/.local/sddfactory
 
 conda activate sddf-client-env
 
