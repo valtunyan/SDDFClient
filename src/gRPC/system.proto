@@ -13,7 +13,8 @@ enum ResponseStatus {
   SUCCESS = 0;
   TRY_LATER = 1;
   TOOL_FAILED = 2;
-  INTERNAL_ERROR = 3;
+  UNKNOWN_PROJECT = 3;
+  INTERNAL_ERROR = 4;
 }
 
 
@@ -21,26 +22,27 @@ enum ResponseStatus {
 enum TaskType {
   NONE = 0;
   ENERGY = 1;
-  RESP_CHARGES = 2;
-  ENERGY_RESP_CHARGES = 3;
+  RESP = 2;
+  ENERGY_RESP = 3;
 }
 
 message Task {
-  TaskType task_type = 1;     
-  string task_identifier = 2; 
-  string task_content = 3;    
+  TaskType task_type = 1;
+  string task_identifier = 2;
+  string task_content = 3; 
 }
 
 message TaskResult {
   TaskType task_type = 1;     
   string task_identifier = 2; 
-  string task_result = 3;     
+  string task_result = 3;
 }
 
 
 
 message GetTaskRequest {
-  string client_identifier = 1;
+  string project_id = 1;
+  string client_identifier = 2;
 }
 
 message GetTaskResponse {

@@ -12,12 +12,15 @@ sddfactory config.json
 ```
 
 ### Manual setup
-In case of manual setup, first we'll need to clone this repo, then if you are familiar with conda environments, the next thing to do is to setup our environment. We'll skip the installation of anaconda/miniconda/micromamba, and move forward.
+In case of manual setup, first we'll need to clone this repo, then if you are familiar with conda environments, the next thing to do is to setup our environment. We'll skip the installation of anaconda/miniconda/micromamba, and move forward. 
+
+**NOTE**: All commands should be run from repo directory.
 ```bash
 conda env create -f environment.yml
 ```
-Then you'll need to download project specific `config.json` file from website change working directory into the repo directory and run the following command.
+Then you'll need to download project specific `config.json` file into repo directory and run the following commands.
 ```bash
+conda activate sddf-client-env
 scripts/sddfactory_manual config.json
 ```
 

@@ -32,7 +32,7 @@ def take_task_process_write_loop(args):
 
         try:
             response = stub.GetTask(
-                system_pb2.GetTaskRequest(client_identifier=CLIENT_ID), 
+                system_pb2.GetTaskRequest(project_id=PROJECT_ID, client_identifier=CLIENT_ID), 
                 metadata=metadata
             )
 
@@ -63,11 +63,11 @@ def take_task_process_write_loop(args):
                     if (response.task.task_type & system_pb2.ENERGY) > 0:
                         results["energy"] = energy
 
-                    if (response.task.task_type & system_pb2.RESP_CHARGES) > 0:
+                    if (response.task.task_type & system_pb2.RESP) > 0:
                         try:
                             resp_charges = psikit_driver.calc_resp_charges()[id_mapping]
                             print("Calculating charges")
-                            results["resp_charges"] = list(resp_charges)
+                            results["resp"] = list(resp_charges)
                         except Exception as ex:
                             print(f"[Process {process_id}] Error during RESP charges calculation: {ex}", flush=True)
                 except Exception as ex:
