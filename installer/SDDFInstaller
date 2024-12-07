@@ -2,10 +2,30 @@
 
 set -e
 
-sudo apt-get update
+OS_TYPE=$(uname)
 
-# Install required packages: curl, wget, git
-sudo apt-get install -y curl wget git
+# Update package manager and install required packages
+if [[ "$OS_TYPE" == "Linux" ]]; then
+    echo "Updating package manager and installing required packages on Linux..."
+    sudo apt-get update
+    sudo apt-get install -y curl wget git
+elif [[ "$OS_TYPE" == "Darwin" ]]; then
+    echo "Updating package manager and installing required packages on macOS..."
+    
+    # Check if Homebrew is installed
+    if ! command -v brew &>/dev/null; then
+        echo "Homebrew not found. Installing Homebrew..."
+        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+        echo "Homebrew installed successfully."
+    fi
+
+    # Install required packages
+    brew update
+    brew install curl wget git
+else
+    echo "Unsupported operating system: $OS_TYPE"
+    exit 1
+fi
 
 # Function to add conda to PATH and source the conda environment setup
 add_conda_to_path() {
@@ -13,69 +33,132 @@ add_conda_to_path() {
     source "$1/etc/profile.d/conda.sh"
 }
 
-# Check if conda is installed in common directories
-if command -v conda &> /dev/null; then
-    echo "Conda is already installed and in PATH"
-    add_conda_to_path $CONDA_PREFIX
-elif [ -d "$HOME/miniconda3" ]; then
-    echo "Found conda in $HOME/miniconda3"
+# Function to check if conda is installed
+check_conda_installed() {
+    if command -v conda &> /dev/null; then
+        echo "Conda is already installed and in PATH"
+        add_conda_to_path $CONDA_PREFIX
+    elif [ -d "$HOME/miniconda3" ]; then
+        echo "Found conda in $HOME/miniconda3"
+        add_conda_to_path "$HOME/miniconda3"
+    elif [ -d "$HOME/anaconda3" ]; then
+        echo "Found conda in $HOME/anaconda3"
+        add_conda_to_path "$HOME/anaconda3"
+    else
+        return 1
+    fi
+}
+
+# Function to install conda
+install_conda() {
+    echo "Installing Conda..."
+
+    # Check if OS is Linux or macOS
+    if [[ "$OS_TYPE" == "Linux" ]]; then
+        INSTALLER_URL="https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh"
+    elif [[ "$OS_TYPE" == "Darwin" ]]; then
+        INSTALLER_URL="https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh"
+    else
+        echo "Unsupported operating system: $OS_TYPE"
+        exit 1
+    fi
+
+    INSTALLER_SCRIPT="miniconda_installer.sh"
+    curl -o $INSTALLER_SCRIPT $INSTALLER_URL
+    chmod +x $INSTALLER_SCRIPT
+    ./$INSTALLER_SCRIPT -b -p $HOME/miniconda3
+    rm $INSTALLER_SCRIPT
+
+    # Add conda to PATH
     add_conda_to_path "$HOME/miniconda3"
-elif [ -d "$HOME/anaconda3" ]; then
-    echo "Found conda in $HOME/anaconda3"
-    add_conda_to_path "$HOME/anaconda3"
-else
-    echo "Conda not found, downloading and installing Miniconda..."
+}
 
-    # Download Miniconda installer
-    MINICONDA_INSTALLER=Miniconda3-latest-Linux-x86_64.sh
-    curl -LO https://repo.anaconda.com/miniconda/$MINICONDA_INSTALLER
+# Function to validate conda
+validate_conda() {
+    echo "Validating Conda installation..."
+    conda --version &>/dev/null
+    if [[ $? -eq 0 ]]; then
+        echo "Conda installation is valid."
+    else
+        echo "Conda installation is invalid or not found. Please check your installation."
+        exit 1
+    fi
+}
 
-    # Install Miniconda silently to $HOME/miniconda3
-    bash $MINICONDA_INSTALLER -b -p "$HOME/miniconda3"
-
-    # Clean up installer
-    rm -f $MINICONDA_INSTALLER
-
-    # Add conda to PATH for current session
-    add_conda_to_path "$HOME/miniconda3"
+# Main script
+if ! check_conda_installed; then
+    install_conda
 fi
+
+validate_conda
 
 DIRECTORY="$HOME/.local/sddfactory"
+TARGET_DIR="$HOME/.local/bin"
 ENV_NAME="sddf-client-env"
+VERSION="dev/macos-installation"  # Change this to the tag or branch you want, e.g., v1.0
 
-# Check if conda is in the path after the installation
-if command -v conda &> /dev/null; then
-    echo "Conda is installed. Setting up environment..."
-    if [ -d "$DIRECTORY" ]; then
-        echo "Directory $DIRECTORY exists. Performing git pull..."
-        cd "$DIRECTORY"
-	git checkout .
-        git pull --force
-    else
-        echo "Directory $DIRECTORY does not exist. Cloning the repository..."
-        git clone https://github.com/valtunyan/SDDFClient.git "$DIRECTORY"
-    fi
 
-    if conda env list | grep -q "$ENV_NAME"; then
-        echo "Conda environment $ENV_NAME exists, updating environment..."
-        conda env update -f $DIRECTORY/environment.yml
-    else
-        echo "Conda environment $ENV_NAME does not exist, creating environment..."
-        conda env create -f $DIRECTORY/environment.yml
-    fi
-
-    conda activate
+if [ -d "$DIRECTORY" ]; then
+    echo "Directory $DIRECTORY exists. Performing git pull..."
+    cd "$DIRECTORY"
+    git reset --hard  # Ensure no local changes block the pull
+    git pull --force
 else
-    echo "Conda installation failed"
-    exit 1
+    echo "Directory $DIRECTORY does not exist. Cloning the repository..."
+    git clone https://github.com/valtunyan/SDDFClient.git "$DIRECTORY"
+    cd "$DIRECTORY"
 fi
 
+echo "Checking out version: $VERSION"
+git checkout "$VERSION"
+
+if conda env list | grep -q "$ENV_NAME"; then
+    echo "Conda environment $ENV_NAME exists, updating environment..."
+    conda env update -f $DIRECTORY/envs/$OS_TYPE.yml
+else
+    echo "Conda environment $ENV_NAME does not exist, creating environment..."
+    conda env create -f $DIRECTORY/envs/$OS_TYPE.yml
+fi
+
+echo "Activating conda base environment..."
+conda activate
+
 # Copy the program files
-sed -i "1a\source $CONDA_PREFIX/etc/profile.d/conda.sh" "$DIRECTORY/scripts/sddfactory"
-mkdir -p "$HOME/.local/bin"
-ln -sf "$DIRECTORY/scripts/sddfactory" "$HOME/.local/bin/sddfactory"
+if [[ "$OS_TYPE" == "Darwin" ]]; then
+    sed -i '' "1a\\
+source $CONDA_PREFIX/etc/profile.d/conda.sh" "$DIRECTORY/scripts/sddfactory"
+else
+    sed -i "1a\source $CONDA_PREFIX/etc/profile.d/conda.sh" "$DIRECTORY/scripts/sddfactory"
+fi
+
+# Create the target directory if it doesn't exist
+mkdir -p "$TARGET_DIR"
+
+# Create the symbolic link in the user-level bin directory
+ln -sf "$DIRECTORY/scripts/sddfactory" "$TARGET_DIR/sddfactory"
 
 # Make the program executable
-chmod +x "$HOME/.local/bin/sddfactory"
+chmod +x "$TARGET_DIR/sddfactory"
 
-echo "Installation complete"
+# Ensure the target directory is in the PATH
+if [[ ":$PATH:" != *":$TARGET_DIR:"* ]]; then
+    echo "Adding $TARGET_DIR to PATH in your shell configuration file..."
+    
+    # Detect the shell and append to the appropriate profile file
+    SHELL_PROFILE=""
+    if [[ "$SHELL" == */bash ]]; then
+        SHELL_PROFILE="$HOME/.bashrc"
+    elif [[ "$SHELL" == */zsh ]]; then
+        SHELL_PROFILE="$HOME/.zshrc"
+    elif [[ "$SHELL" == */fish ]]; then
+        SHELL_PROFILE="$HOME/.config/fish/config.fish"
+    else
+        SHELL_PROFILE="$HOME/.profile"
+    fi
+
+    # Add the path to the profile file
+    echo "export PATH=\$PATH:$TARGET_DIR" >> "$SHELL_PROFILE"
+    echo "Please restart your shell or run 'source $SHELL_PROFILE' to update your PATH."
+fi
+
+echo "Installation complete. The 'sddfactory' command is available in your PATH."
