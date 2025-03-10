@@ -6,7 +6,7 @@ The easiest way to setup client is to download `installer/SDDFInstaller` file in
 chmod +x SDDFInstaller
 ./SDDFInstaller
 ```
-After that `sddfactory` script will be available for use. You'll just need to download project specific `config.json` file from website (like in this [page](https://sddfactory.cloud/projects/dft-energy)) and run the following command.
+After that `sddfactory` script will be available for use. You'll just need to download project specific `config.json` file from website (like in this [page](https://sddfactory.cloud/projects/dftresp)) and run the following command.
 ```bash
 sddfactory config.json
 ```
